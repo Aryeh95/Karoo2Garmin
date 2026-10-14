@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Configuration & Secrets
+.env
+*.env
+!*.env.example
+
+# Runtime Data
+data/
+*.db
+*.sqlite3
+*.log
+*.fit
+tmp/
+
+# Garmin Tokens
+.garminconnect/
+tokens/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,36 @@
+services:
+  karoo2garmin:
+    build: .
+    image: karoo2garmin:latest
+    container_name: karoo2garmin
+    restart: unless-stopped
+    environment:
+      # Hammerhead Karoo Credentials (or KAROO_AUTH_TOKEN)
+      - KAROO_EMAIL=${KAROO_EMAIL:-your_karoo_email@example.com}
+      - KAROO_PASSWORD=${KAROO_PASSWORD:-your_karoo_password}
+      # - KAROO_AUTH_TOKEN=your_jwt_token_here
+
+      # Garmin Connect Credentials (optional if tokens exist in data/garmin_tokens)
+      - GARMIN_USERNAME=${GARMIN_USERNAME:-your_garmin_email@example.com}
+      - GARMIN_PASSWORD=${GARMIN_PASSWORD:-your_garmin_password}
+
+      # Storage directories inside container
+      - DATA_DIR=/data
+      - GARMIN_TOKEN_DIR=/data/garmin_tokens
+
+      # Sync Configuration (Default: 60 minutes)
+      - SYNC_INTERVAL_MINUTES=60
+      - SYNC_BATCH_SIZE=10
+      - CHECK_DUPLICATES=true
+      - DUPLICATE_THRESHOLD_HOURS=2
+
+      # FIT Device Spoofing (Garmin Edge 1040 = 3927, Edge 840 = 4024)
+      - SPOOF_GARMIN_DEVICE=true
+      - DEVICE_PRODUCT_ID=3927
+      - DEVICE_SOFTWARE_VERSION=27.10
+      - ATHLETE_FTP=0
+
+      # Logging level
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/data
