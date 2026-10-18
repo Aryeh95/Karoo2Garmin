@@ -120,13 +120,15 @@ class FitEnhancer:
 
                 # 1. FileId: Spoof file creator as Garmin Edge
                 if msg_type is FileIdMessage:
-                    msg.type = FileType.ACTIVITY
-                    msg.manufacturer = (
+                    _safe_set(msg, "type", FileType.ACTIVITY)
+                    _safe_set(
+                        msg,
+                        "manufacturer",
                         Manufacturer.GARMIN.value
                         if hasattr(Manufacturer.GARMIN, "value")
-                        else 1
+                        else 1,
                     )
-                    msg.product = self.device_product_id
+                    _safe_set(msg, "product", self.device_product_id)
                     continue
 
                 if msg_type is FileCreatorMessage:
@@ -137,20 +139,22 @@ class FitEnhancer:
                     dev_index = getattr(msg, "device_index", None)
                     # device_index 0 is the primary recording unit (Karoo head unit)
                     if dev_index in (0, None) and not primary_device_patched:
-                        msg.manufacturer = (
+                        _safe_set(
+                            msg,
+                            "manufacturer",
                             Manufacturer.GARMIN.value
                             if hasattr(Manufacturer.GARMIN, "value")
-                            else 1
+                            else 1,
                         )
-                        msg.product = self.device_product_id
-                        msg.software_version = self.software_version
+                        _safe_set(msg, "product", self.device_product_id)
+                        _safe_set(msg, "software_version", self.software_version)
                         primary_device_patched = True
                     continue
 
                 # 3. Sport: Preserve Karoo's sport and sub_sport (do NOT force Virtual Activity!)
                 if msg_type is SportMessage:
                     if not getattr(msg, "sport", None):
-                        msg.sport = Sport.CYCLING
+                        _safe_set(msg, "sport", Sport.CYCLING)
                     continue
 
                 # 4. Records: Collect metrics while preserving GPS and sensor data
