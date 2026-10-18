@@ -24,6 +24,12 @@ def parse_activity_datetime(date_val: Any) -> Optional[datetime]:
     if isinstance(date_val, datetime):
         return date_val if date_val.tzinfo else date_val.replace(tzinfo=timezone.utc)
 
+    if isinstance(date_val, dict):
+        for k in ("iso", "startTime", "start_time", "timestamp", "value", "date"):
+            if k in date_val and date_val[k]:
+                return parse_activity_datetime(date_val[k])
+        return None
+
     # Handle numeric timestamp
     try:
         ts = float(date_val)

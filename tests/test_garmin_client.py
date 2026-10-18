@@ -28,6 +28,13 @@ class TestGarminClientUtils(unittest.TestCase):
         self.assertIsNotNone(dt_ms)
         self.assertEqual(dt_ms.year, 2023)
 
+    def test_parse_dict_datetime(self):
+        dt = parse_activity_datetime({"iso": "2026-10-18T10:00:00Z"})
+        self.assertIsNotNone(dt)
+        self.assertEqual(dt.year, 2026)
+        self.assertEqual(dt.month, 10)
+        self.assertEqual(dt.day, 18)
+
     def test_format_local_datetime(self):
         res = format_local_datetime("2026-10-12T14:30:00Z")
         self.assertTrue(len(res) > 0)

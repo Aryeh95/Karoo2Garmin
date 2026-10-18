@@ -92,6 +92,41 @@ class TestKarooClient(unittest.TestCase):
         self.assertEqual(activities[1]["name"], "Evening Commute")
 
     @patch("src.karoo_client.requests.Session")
+    def test_get_activities_dict_metrics(self, mock_session_cls):
+        mock_session = MagicMock()
+        mock_session_cls.return_value = mock_session
+
+        payload_data = {"sub": "user_abc"}
+        b64 = base64.urlsafe_b64encode(json.dumps(payload_data).encode("utf-8")).decode("utf-8").rstrip("=")
+        fake_jwt = f"header.{b64}.sig"
+
+        client = KarooClient(auth_token=fake_jwt)
+        client.session = mock_session
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": [
+                {
+                    "id": "ride_dict_1",
+                    "name": {"value": "Mountain Loop"},
+                    "startTime": {"iso": "2026-10-18T00:00:00Z"},
+                    "distance": {"value": 52100.5, "unit": "meters"},
+                    "duration": {"moving_time": 6400, "elapsed_time": 7100},
+                }
+            ]
+        }
+        mock_session.get.return_value = mock_resp
+
+        activities = client.get_activities(limit=1)
+        self.assertEqual(len(activities), 1)
+        self.assertEqual(activities[0]["id"], "ride_dict_1")
+        self.assertEqual(activities[0]["name"], "Mountain Loop")
+        self.assertEqual(activities[0]["date"], "2026-10-18T00:00:00Z")
+        self.assertEqual(activities[0]["distance"], 52100.5)
+        self.assertEqual(activities[0]["duration"], 6400.0)
+
+    @patch("src.karoo_client.requests.Session")
     def test_download_activity_fit(self, mock_session_cls):
         mock_session = MagicMock()
         mock_session_cls.return_value = mock_session

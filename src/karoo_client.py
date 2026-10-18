@@ -46,6 +46,61 @@ def decode_jwt_payload(token: str) -> Dict[str, Any]:
     return json.loads(decoded.decode("utf-8"))
 
 
+def _extract_numeric(val: Any) -> float:
+    """Safely extract a float from a number, string, or dictionary."""
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, dict):
+        for k in (
+            "value",
+            "moving_time",
+            "movingTime",
+            "elapsed_time",
+            "elapsedTime",
+            "total",
+            "seconds",
+            "duration",
+            "distance",
+        ):
+            if k in val and val[k] is not None:
+                try:
+                    return float(val[k])
+                except (ValueError, TypeError):
+                    pass
+        for v in val.values():
+            if isinstance(v, (int, float)):
+                return float(v)
+            try:
+                return float(v)
+            except (ValueError, TypeError):
+                pass
+        return 0.0
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _extract_date(act: Dict[str, Any]) -> str:
+    """Safely extract date string or timestamp representation from activity dict."""
+    for k in ("startTime", "start_time", "date", "createdAt", "created_at", "timestamp"):
+        v = act.get(k)
+        if not v:
+            continue
+        if isinstance(v, str):
+            return v
+        if isinstance(v, (int, float)):
+            return str(v)
+        if isinstance(v, dict):
+            for sub_k in ("iso", "startTime", "start_time", "value", "timestamp", "formatted", "date"):
+                sub_v = v.get(sub_k)
+                if sub_v:
+                    return str(sub_v)
+    return ""
+
+
 class KarooClient:
     """Handles authentication and activity downloading from Hammerhead Karoo."""
 
@@ -175,20 +230,26 @@ class KarooClient:
                     if not act_id:
                         continue
 
-                    name = act.get("name") or act.get("title") or "Karoo Ride"
-                    date_val = (
-                        act.get("startTime")
-                        or act.get("start_time")
-                        or act.get("date")
-                        or act.get("createdAt")
-                        or ""
+                    name_val = act.get("name") or act.get("title")
+                    if isinstance(name_val, dict):
+                        name = str(name_val.get("value") or name_val.get("text") or "Karoo Ride")
+                    elif name_val:
+                        name = str(name_val)
+                    else:
+                        name = "Karoo Ride"
+
+                    date_val = _extract_date(act)
+                    distance = _extract_numeric(
+                        act.get("distance")
+                        or act.get("total_distance")
+                        or act.get("totalDistance")
                     )
-                    distance = float(act.get("distance") or act.get("total_distance") or 0.0)
-                    duration = float(
+                    duration = _extract_numeric(
                         act.get("duration")
                         or act.get("movingTime")
+                        or act.get("moving_time")
                         or act.get("elapsedTime")
-                        or 0.0
+                        or act.get("elapsed_time")
                     )
 
                     standardized.append({
